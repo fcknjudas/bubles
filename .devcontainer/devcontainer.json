@@ -1,9 +1,19 @@
 {
-    "name": "Firefox in Docker",
-    "image": "ubuntu:22.04",
-    "features": {
-        "docker-in-docker": "latest"
-    },
-    "forwardPorts": [6080],
-    "postCreateCommand": "chmod +x .devcontainer/setup.sh && ./.devcontainer/setup.sh"
+  "name": "Firefox Desktop",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "docker-in-docker": "latest"
+  },
+  "forwardPorts": [
+    5800,
+    5900
+  ],
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
 }
