@@ -1,0 +1,11 @@
+{
+  "name": "Firefox Fast",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "docker-in-docker": "latest"
+  },
+  "forwardPorts": [
+    5800
+  ],
+  "postCreateCommand": "docker run -d --rm -p 5800:5800 jlesage/firefox"
+}
