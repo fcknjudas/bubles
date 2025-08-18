@@ -5,5 +5,5 @@
         "docker-in-docker": "latest"
     },
     "forwardPorts": [6080],
-    "postCreateCommand": "bash .devcontainer/setup.sh"
+    "postCreateCommand": "chmod +x .devcontainer/setup.sh && ./.devcontainer/setup.sh"
 }
