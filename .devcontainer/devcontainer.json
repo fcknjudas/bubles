@@ -1,0 +1,9 @@
+{
+    "name": "Firefox in Docker",
+    "image": "ubuntu:22.04",
+    "features": {
+        "docker-in-docker": "latest"
+    },
+    "forwardPorts": [6080],
+    "postCreateCommand": "bash .devcontainer/setup.sh"
+}
