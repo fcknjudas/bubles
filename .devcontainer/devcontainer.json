@@ -1,5 +1,5 @@
 {
-  "name": "Firefox Lite",
+  "name": "Firefox Secure",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
     "docker-in-docker": "latest"
@@ -7,5 +7,12 @@
   "forwardPorts": [
     5800
   ],
-  "postCreateCommand": "bash .devcontainer/setup.sh"
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
 }
