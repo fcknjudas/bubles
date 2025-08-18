@@ -1,12 +1,11 @@
 {
-  "name": "Firefox Desktop",
+  "name": "Firefox Power Mode",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
     "docker-in-docker": "latest"
   },
   "forwardPorts": [
-    5800,
-    5900
+    5800
   ],
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "customizations": {
