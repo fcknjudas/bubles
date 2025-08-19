@@ -5,10 +5,11 @@
     "docker-in-docker": "latest"
   },
   "forwardPorts": [
-    5800
+    5800,
+    5900
   ],
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y curl wget && echo 'Checking Docker installation...' && docker --version && echo 'Docker is ready!' && mkdir -p /tmp/firefox && chmod 777 /tmp/firefox",
-  "postStartCommand": "sleep 10 && echo 'Starting Firefox container...' && docker stop firefox-container 2>/dev/null || true && docker rm firefox-container 2>/dev/null || true && docker run -d --name firefox-container --restart=unless-stopped -p 5800:5800 -p 5900:5900 -v /tmp/firefox:/config:rw -e DISPLAY_WIDTH=1600 -e DISPLAY_HEIGHT=900 -e KEEP_APP_RUNNING=1 jlesage/firefox && echo 'Firefox container started' && sleep 15 && echo 'Container status:' && docker ps && echo 'Container logs:' && docker logs firefox-container --tail 10",
+  "postCreateCommand": "echo '\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u044f...' && mkdir -p /tmp/firefox && chmod 777 /tmp/firefox && docker --version && echo 'Docker \u0433\u043e\u0442\u043e\u0432!'",
+  "postStartCommand": "echo '\u0417\u0430\u043f\u0443\u0441\u043a Firefox...' && docker stop firefox-container 2>/dev/null || true && docker rm firefox-container 2>/dev/null || true && sleep 2 && docker run -d --name firefox-container --restart=unless-stopped -p 5800:5800 -p 5900:5900 -v /tmp/firefox:/config:rw -e DISPLAY_WIDTH=1600 -e DISPLAY_HEIGHT=900 -e KEEP_APP_RUNNING=1 jlesage/firefox && echo 'Firefox \u0437\u0430\u043f\u0443\u0449\u0435\u043d!'",
   "customizations": {
     "vscode": {
       "extensions": [
