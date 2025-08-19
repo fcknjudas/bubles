@@ -8,8 +8,8 @@
     5800,
     5900
   ],
-  "postCreateCommand": "echo '\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u044f...' && mkdir -p /tmp/firefox && chmod 777 /tmp/firefox && docker --version && echo 'Docker \u0433\u043e\u0442\u043e\u0432!'",
-  "postStartCommand": "echo '\u0417\u0430\u043f\u0443\u0441\u043a Firefox...' && docker stop firefox-container 2>/dev/null || true && docker rm firefox-container 2>/dev/null || true && sleep 2 && docker run -d --name firefox-container --restart=unless-stopped -p 5800:5800 -p 5900:5900 -v /tmp/firefox:/config:rw -e DISPLAY_WIDTH=1600 -e DISPLAY_HEIGHT=900 -e KEEP_APP_RUNNING=1 jlesage/firefox && echo 'Firefox \u0437\u0430\u043f\u0443\u0449\u0435\u043d!'",
+  "postCreateCommand": "echo '\u26a1 \u0411\u044b\u0441\u0442\u0440\u0430\u044f \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430...' && mkdir -p /tmp/firefox && chmod 777 /tmp/firefox",
+  "postStartCommand": "echo '\ud83d\ude80 \u0417\u0430\u043f\u0443\u0441\u043a Firefox...' && docker run -d --name firefox-container --restart=unless-stopped -p 5800:5800 -p 5900:5900 -v /tmp/firefox:/config:rw -e DISPLAY_WIDTH=1600 -e DISPLAY_HEIGHT=900 -e KEEP_APP_RUNNING=1 jlesage/firefox",
   "customizations": {
     "vscode": {
       "extensions": [
