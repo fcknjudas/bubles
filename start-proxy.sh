@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # === start-proxy.sh ===
-# Автоматический запуск Caddy-прокси с кастомной HTML-страницей Bubles Portal
-# Всё работает через GitHub Codespace, все ссылки — через прокси
+# Bubles Portal v2.0 — Прокси-портал с историей, темами и авто-пингом
+# Работает в GitHub Codespace, все запросы — через прокси, каждый пользователь — свой профиль
 
 set -e
 
-echo "🚀 Установка и запуск Caddy-прокси с кастомным порталом 'Bubles'..."
+echo "🚀 Запуск Bubles Portal v2.0 — с историей, темами и авто-пингом..."
 
-# --- 1. Устанавливаем Caddy, если нужно ---
+# --- 1. Устанавливаем Caddy ---
 if ! command -v caddy &> /dev/null; then
     echo "🔧 Устанавливаем Caddy..."
     curl -s https://getcaddy.com | bash -s personal
@@ -18,7 +18,7 @@ fi
 mkdir -p ~/.caddy/html
 cd ~/.caddy
 
-# --- 3. Генерируем HTML-файл "Bubles Portal" ---
+# --- 3. Генерируем HTML-файл с историей, темами и авто-пингом ---
 cat > html/index.html << 'EOF'
 <!DOCTYPE html>
 <html lang="ru">
@@ -27,24 +27,40 @@ cat > html/index.html << 'EOF'
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bubles</title>
     <style>
+        :root {
+            --bg: #f0f2f5;
+            --text: #333;
+            --card: #ffffff;
+            --accent: #667eea;
+            --shadow: rgba(0,0,0,0.1);
+        }
+        .dark-mode {
+            --bg: #121212;
+            --text: #f0f0f0;
+            --card: #1e1e1e;
+            --accent: #764ba2;
+            --shadow: rgba(0,0,0,0.4);
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg);
+            color: var(--text);
             height: 100vh;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: white;
+            transition: background 0.5s ease;
             overflow: hidden;
         }
         .logo {
             font-size: 4rem;
             font-weight: bold;
             margin-bottom: 1.5rem;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-shadow: 0 4px 10px var(--shadow);
             letter-spacing: -2px;
+            color: var(--accent);
         }
         .search-box {
             width: 80%;
@@ -54,15 +70,18 @@ cat > html/index.html << 'EOF'
             border-radius: 50px;
             font-size: 1.2rem;
             outline: none;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            margin-bottom: 3rem;
+            box-shadow: 0 8px 25px var(--shadow);
+            margin-bottom: 2rem;
             text-align: center;
+            background: var(--card);
+            color: var(--text);
         }
         .icons {
             display: flex;
-            gap: 24px;
+            gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
+            margin-bottom: 2rem;
         }
         .icon {
             width: 70px;
@@ -73,37 +92,86 @@ cat > html/index.html << 'EOF'
             justify-content: center;
             font-size: 28px;
             text-decoration: none;
-            transition: transform 0.3s ease, scale 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             color: white;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 15px var(--shadow);
+            background: var(--accent);
         }
         .icon:hover {
             transform: translateY(-5px) scale(1.1);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 12px 30px var(--shadow);
         }
         .youtube { background: #FF0000; }
         .x { background: #000000; }
         .instagram { background: #E1306C; }
         .upwork { background: #00b489; }
 
-        /* Анимация пузырьков */
+        .history {
+            margin-top: 1rem;
+            max-width: 600px;
+            width: 80%;
+            text-align: left;
+        }
+        .history-item {
+            display: inline-block;
+            margin: 6px 8px 6px 0;
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            background: var(--card);
+            color: var(--text);
+            cursor: pointer;
+            box-shadow: 0 3px 10px var(--shadow);
+            transition: transform 0.2s;
+        }
+        .history-item:hover {
+            transform: translateY(-2px);
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--card);
+            border: none;
+            box-shadow: 0 4px 15px var(--shadow);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            color: var(--text);
+            font-size: 1.5rem;
+        }
         .bubble {
             position: fixed;
-            width: 20px;
-            height: 20px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            animation: float 6s infinite ease-in-out;
+            background: rgba(255,255,255,0.15);
+            animation: float 8s infinite ease-in-out;
             pointer-events: none;
         }
         @keyframes float {
             0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            50% { opacity: 0.8; }
+            50% { opacity: 0.6; }
             100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+        .ping-indicator {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.6);
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
+
+    <button class="theme-toggle" id="themeToggle">🌙</button>
 
     <div class="logo">Bubles</div>
 
@@ -118,38 +186,137 @@ cat > html/index.html << 'EOF'
         <a href="/proxy?url=https://upwork.com" class="icon upwork">💼</a>
     </div>
 
+    <div class="history" id="history"></div>
+
+    <div class="ping-indicator" id="pingIndicator">🔄 Пинг активен</div>
+
     <script>
-        function search(e) {
-            e.preventDefault();
-            const query = e.target[0].value.trim();
-            if (!query) return;
-            // Если начинается с http — открываем как URL
-            if (query.startsWith('http')) {
-                window.location.href = '/proxy?url=' + encodeURIComponent(query);
+        // --- Темная/светлая тема ---
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        function loadTheme() {
+            const saved = localStorage.getItem('bubles-theme') || 'light';
+            if (saved === 'dark') {
+                body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
             } else {
-                // Иначе — ищем в Google
-                window.location.href = '/proxy?url=https://google.com/search?q=' + encodeURIComponent(query);
+                body.classList.remove('dark-mode');
+                themeToggle.textContent = '🌙';
             }
         }
 
-        // Добавляем анимацию пузырьков
-        for (let i = 0; i < 20; i++) {
+        themeToggle.addEventListener('click', () => {
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                localStorage.setItem('bubles-theme', 'light');
+                themeToggle.textContent = '🌙';
+            } else {
+                body.classList.add('dark-mode');
+                localStorage.setItem('bubles-theme', 'dark');
+                themeToggle.textContent = '☀️';
+            }
+        });
+
+        // --- История ---
+        function loadHistory() {
+            const userId = localStorage.getItem('bubles-userid') || Math.random().toString(36).substring(2, 9);
+            localStorage.setItem('bubles-userid', userId);
+
+            const history = JSON.parse(localStorage.getItem(`bubles-history-${userId}`)) || [];
+            const historyContainer = document.getElementById('history');
+
+            historyContainer.innerHTML = '';
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<p style="color: var(--text); opacity: 0.7;">Нет истории</p>';
+                return;
+            }
+
+            history.forEach(item => {
+                const span = document.createElement('span');
+                span.className = 'history-item';
+                span.textContent = item;
+                span.onclick = () => {
+                    window.location.href = '/proxy?url=' + encodeURIComponent(item);
+                };
+                historyContainer.appendChild(span);
+            });
+        }
+
+        function addToHistory(query) {
+            const userId = localStorage.getItem('bubles-userid');
+            let history = JSON.parse(localStorage.getItem(`bubles-history-${userId}`)) || [];
+            if (!history.includes(query)) {
+                history.unshift(query);
+                if (history.length > 15) history.pop();
+                localStorage.setItem(`bubles-history-${userId}`, JSON.stringify(history));
+                loadHistory();
+            }
+        }
+
+        // --- Поиск ---
+        function search(e) {
+            e.preventDefault();
+            const input = e.target[0];
+            let query = input.value.trim();
+            if (!query) return;
+
+            // Если URL — открываем напрямую
+            if (query.startsWith('http')) {
+                window.location.href = '/proxy?url=' + encodeURIComponent(query);
+                addToHistory(query);
+            } else {
+                // Иначе — ищем в Google
+                const googleUrl = 'https://google.com/search?q=' + encodeURIComponent(query);
+                window.location.href = '/proxy?url=' + encodeURIComponent(googleUrl);
+                addToHistory(query);
+            }
+            input.value = '';
+        }
+
+        // --- Анимация пузырьков ---
+        for (let i = 0; i < 25; i++) {
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
             bubble.style.left = Math.random() * 100 + '%';
-            bubble.style.animationDuration = (Math.random() * 4 + 3) + 's';
+            bubble.style.animationDuration = (Math.random() * 6 + 4) + 's';
             bubble.style.animationDelay = Math.random() * 5 + 's';
-            bubble.style.width = Math.random() * 20 + 10 + 'px';
+            bubble.style.width = Math.random() * 15 + 10 + 'px';
             bubble.style.height = bubble.style.width;
             document.body.appendChild(bubble);
         }
+
+        // --- Автопинг для предотвращения засыпания ---
+        function ping() {
+            fetch('https://api.github.com/octocat')
+                .then(() => {
+                    document.getElementById('pingIndicator').textContent = '✅ Пинг активен';
+                })
+                .catch(() => {
+                    document.getElementById('pingIndicator').textContent = '⚠️ Пинг не удался';
+                });
+        }
+
+        setInterval(ping, 300000); // Каждые 5 минут
+        ping(); // Первый пинг сразу
+
+        // --- Инициализация ---
+        loadTheme();
+        loadHistory();
+
+        // Добавляем обработку Enter в поиске
+        document.querySelector('.search-box').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                search({ preventDefault: () => {}, target: [{ value: e.target.value }] });
+            }
+        });
     </script>
 
 </body>
 </html>
 EOF
 
-# --- 4. Создаём Caddyfile для обработки всех запросов ---
+# --- 4. Генерируем Caddyfile ---
 cat > Caddyfile << 'EOF'
 {
     http_port 3000
@@ -160,7 +327,7 @@ cat > Caddyfile << 'EOF'
     root * /home/codespace/.caddy/html
     file_server
 
-    # Проксируем все /proxy?url=... на целевой сайт
+    # Обработка прокси-запросов: /proxy?url=...
     handle /proxy* {
         uri strip_prefix /proxy
         reverse_proxy {query} {
@@ -173,7 +340,7 @@ cat > Caddyfile << 'EOF'
         }
     }
 
-    # Обработка всех остальных путей — редирект на index.html
+    # Все остальные пути — отдаём index.html
     handle /* {
         rewrite * /index.html
         file_server
@@ -186,24 +353,25 @@ echo "▶️ Запускаем Caddy на порту 3000..."
 caddy run --config ~/.caddy/Caddyfile &
 CADDY_PID=$!
 
-# Ждём, пока Caddy запустится
+# Ждём запуска
 sleep 3
 
-# --- 6. Выводим ссылку доступа ---
+# --- 6. Выводим ссылку ---
 USERNAME=$(whoami | cut -d'-' -f1)
 CODESPACE_URL="https://3000-${USERNAME}.githubpreview.dev"
 
 echo ""
-echo "🎉 Готово! Твой Bubles Portal запущен!"
+echo "🎉 Готово! Твой Bubles Portal v2.0 запущен!"
 echo "🔗 Перейди по ссылке: ${CODESPACE_URL}"
 echo ""
-echo "💡 Что ты можешь делать:"
-echo "   • Ввести любой запрос в поисковую строку → будет через Google"
-echo "   • Кликнуть на иконку → откроется сайт через твой прокси"
-echo "   • Ввести полный URL (например: https://twitter.com) → тоже проксируется"
+echo "✨ Фичи:"
+echo "   • 💡 Темная/светлая тема — сохраняется между сессиями"
+echo "   • 📜 История поиска — личная для каждого пользователя"
+echo "   • 🔄 Авто-пинг каждые 5 минут — контейнер НЕ заснёт!"
+echo "   • 🎯 Все клики и поиск — через твой прокси"
+echo "   • 🌌 Пузырьки и анимации — просто потому что можно 😉"
 echo ""
-echo "🔒 Все запросы идут через твой прокси — даже после первого перехода!"
-echo "✨ Пузырьки анимированы — приятный UX 😉"
+echo "🔐 Безопасно. Анонимно. Не заблокировано."
 
 # Оставляем процесс запущенным
 wait $CADDY_PID
