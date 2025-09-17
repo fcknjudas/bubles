@@ -1,15 +1,46 @@
-from flask import Flask, request, redirect, render_template_string
+import re
+import requests
+from flask import Flask, request, Response, render_template_string
+from urllib.parse import urljoin, urlparse
 
 app = Flask(__name__)
 
+# Базовый URL вашего прокси (будет определён автоматически)
+BASE_URL = None
+
+# Популярные сайты
 POPULAR_SITES = [
     {'name': 'YouTube', 'url': 'https://www.youtube.com', 'icon': '▶️'},
     {'name': 'Instagram', 'url': 'https://www.instagram.com', 'icon': '📷'},
     {'name': 'X (Twitter)', 'url': 'https://twitter.com', 'icon': '𝕏'},
     {'name': 'Upwork', 'url': 'https://www.upwork.com', 'icon': '💼'},
-    {'name': 'TikTok', 'url': 'https://www.tiktok.com', 'icon': '🎵'},
-    {'name': 'Reddit', 'url': 'https://www.reddit.com', 'icon': '🔺'},
 ]
+
+def make_proxy_url(target_url):
+    """Создаёт URL для проксирования через наш сервер"""
+    return f'{BASE_URL}/proxy?url={target_url}'
+
+def modify_html_content(html, target_base_url):
+    """Модифицирует HTML: заменяет все ссылки на проксированные"""
+    # Заменяем ссылки в href и src
+    html = re.sub(r'(href|src)\\s*=\\s*["\']([^"\']*?)["\']',
+                  lambda m: f'{m.group(1)}="{make_proxy_url(urljoin(target_base_url, m.group(2)))}"'
+                  if not m.group(2).startswith(('http://', 'https://', 'mailto:', 'tel:', '#', 'javascript:'))
+                  else f'{m.group(1)}="{m.group(2)}"',
+                  html, flags=re.IGNORECASE)
+
+    # Заменяем полные URL на проксированные
+    html = re.sub(r'(https?://[^\s"\'<>]+)',
+                  lambda m: make_proxy_url(m.group(1)),
+                  html)
+
+    return html
+
+@app.before_request
+def set_base_url():
+    global BASE_URL
+    if BASE_URL is None:
+        BASE_URL = f"{request.scheme}://{request.host}"
 
 @app.route('/')
 def home():
@@ -17,7 +48,7 @@ def home():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>bubles — универсальный шлюз</title>
+        <title>bubles — прокси-шлюз</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
             body {
@@ -92,12 +123,12 @@ def home():
     <body>
         <div class="container">
             <h1>bubles</h1>
-            <form action="/go" method="GET">
-                <input type="text" name="url" class="search-box" placeholder="Введите URL или название сайта..." autocomplete="off" autofocus>
+            <form action="/proxy" method="GET">
+                <input type="text" name="url" class="search-box" placeholder="Введите URL сайта..." autocomplete="off" autofocus>
             </form>
             <div class="sites-grid">
                 {% for site in sites %}
-                <a href="/go?url={{ site.url }}" class="site-btn">
+                <a href="/proxy?url={{ site.url }}" class="site-btn">
                     <div class="icon">{{ site.icon }}</div>
                     <div class="name">{{ site.name }}</div>
                 </a>
@@ -108,14 +139,37 @@ def home():
     </html>
     ''', sites=POPULAR_SITES)
 
-@app.route('/go')
-def go():
-    url = request.args.get('url', '').strip()
-    if not url:
-        return redirect('/')
-    if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url
-    return redirect(url)
+@app.route('/proxy')
+def proxy():
+    target_url = request.args.get('url', '').strip()
+    if not target_url:
+        return "URL не указан", 400
+
+    if not target_url.startswith(('http://', 'https://')):
+        target_url = 'https://' + target_url
+
+    try:
+        # Делаем запрос от имени сервера
+        headers = {
+            'User-Agent': request.headers.get('User-Agent', 'Mozilla/5.0'),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+        }
+
+        resp = requests.get(target_url, headers=headers, timeout=10)
+
+        # Если это HTML — модифицируем ссылки
+        if 'text/html' in resp.headers.get('Content-Type', ''):
+            modified_content = modify_html_content(resp.text, target_url)
+            return Response(modified_content, content_type=resp.headers.get('Content-Type'))
+
+        # Для остального контента — просто проксируем
+        return Response(resp.content, content_type=resp.headers.get('Content-Type'))
+
+    except Exception as e:
+        return f"Ошибка прокси: {str(e)}", 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)  # ← ВАЖНО: Render использует порт 10000
+    app.run(host='0.0.0.0', port=10000)
