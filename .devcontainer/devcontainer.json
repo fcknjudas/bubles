@@ -1,7 +1,23 @@
 {
   "name": "Buble!",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
-  "postCreateCommand": "apt-get install docker && docker run -p 80:80 -it ghcr.io/ryanmab/censordodge",
-  "forwardPorts": [80],
-  "features": {}
+  "features": {
+    "docker-in-docker": "latest"
+  },
+  "forwardPorts": [
+    5800,
+    5900
+  ],
+  "postCreateCommand": "echo '\u26a1 \u0411\u044b\u0441\u0442\u0440\u0430\u044f \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430...' && mkdir -p /tmp/firefox && chmod 777 /tmp/firefox",
+  "postStartCommand": "echo '\ud83d\ude80 \u0417\u0430\u043f\u0443\u0441\u043a Firefox...' && docker run -d --name firefox-container --restart=unless-stopped -p 5800:5800 -p 5900:5900 -v /tmp/firefox:/config:rw -e DISPLAY_WIDTH=1600 -e DISPLAY_HEIGHT=900 -e KEEP_APP_RUNNING=1 jlesage/firefox",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "runArgs": [
+    "--privileged"
+  ]
 }
